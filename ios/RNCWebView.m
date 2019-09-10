@@ -862,6 +862,16 @@ static NSURLCredential* clientAuthenticationCredential;
 - (void)      webView:(WKWebView *)webView
   didFinishNavigation:(WKNavigation *)navigation
 {
+  // Since WKWebView use a independent cookies store in iOS 11 and above,
+  // this set cookies in WKWebView back to the shared NSHTTPCookieStorage
+  if(_sharedCookiesEnabled && @available(iOS 11.0, *)) {
+    [webView.configuration.websiteDataStore.httpCookieStore getAllCookies: ^(NSArray<NSHTTPCookie *> *cookies) {
+      for (NSHTTPCookie *cookie in cookies) {
+        [[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];
+      }
+    }];
+  }
+
   if (_injectedJavaScript) {
     [self evaluateJS: _injectedJavaScript thenCall: ^(NSString *jsEvaluationValue) {
       NSMutableDictionary *event = [self baseEvent];
